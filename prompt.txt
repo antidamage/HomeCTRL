@@ -1,0 +1,191 @@
+Build me a guided installer for my local AI stack
+
+Goal: One-line bash installer that sets up a full local AI rig on Ubuntu Server 22.04 with NVIDIA GPU (RTX 2080 Ti class). Stack = Ollama + Open WebUI + Router (auto-escalate + web search + OCR) + STT + TTS + nginx forward proxy. Everything runs locally. Minimal clicks. Idempotent. Loud progress logs.
+
+Components & ports
+
+Ollama (host service) — http://127.0.0.1:11434
+Models to pull: llama3:8b, qwen2.5:14b-instruct, deepseek-coder:6.7b-instruct
+
+Optional vision: qwen2.5-vl:7b-instruct or llava:13b
+Open WebUI (Docker, host network) — UI on :8080 by default
+
+Config points to Ollama 11434 and OpenAI-compatible router http://127.0.0.1:1338/v1
+Router (Docker, host network) — :1338/v1 (OpenAI-compatible)
+
+Front model (fast/planner): default llama3:8b or deepseek-coder:6.7b-instruct
+
+Back model (heavy/solver): qwen2.5:14b-instruct
+
+Features: difficulty decider, web search (Tavily), OCR (Tesseract), anti-echo fallback, explicit log markers, non-stream JSON handling
+
+STT — faster-whisper FastAPI service on :5002 (GPU if available)
+
+TTS — Piper FastAPI service on :5003 (voice: en_US-amy-low.onnx)
+
+nginx forward proxy — reverse proxy for serving Open WebUI and APIs from a domain name. Example: https://ai.example.com → Open WebUI :8080, https://api.example.com/router → router :1338.
+
+Logging: docker compose logs -f shows SEARCHING… / ESCALATING… / FRONT / BACK markers
+
+Installer requirements
+
+Bash script (one file) + modular scripts/helpers
+
+Must be idempotent wherever possible: safe re-run without breaking existing services; only rebuild/pull when needed; no duplicate systemd units; skip steps already complete; create folders if missing
+
+Works with sudo docker (user may not be in docker group)
+
+Detects/installs prerequisites: docker, docker compose plugin, nvidia-container-toolkit (only if needed), ffmpeg, ca-certificates, nginx, certbot (for TLS)
+
+Ensures Ollama installed & enabled via systemd; sets OLLAMA_HOST=127.0.0.1:11434
+
+Creates these project dirs in $HOME:
+
+~/ollama-webui/ (Open WebUI compose & data volume)
+
+~/llama-router/ (router Dockerfile, compose, app)
+
+~/voice/stt/ and ~/voice/tts/ (venv OR Docker, choose via flag)
+
+Writes all configs with standard names (no personal branding)
+
+Pulls the three base models (and optional vision on flag)
+
+WebUI compose uses network_mode: host and envs:
+
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OPENAI_API_BASE_URL=http://127.0.0.1:1338/v1
+OPENAI_API_KEY=EMPTY
+
+Router:
+
+requirements.txt, Dockerfile, router.py (FastAPI)
+
+Adds OCR (pytesseract + pillow), Tavily support (env TAVILY_API_KEY), explicit logging, anti-echo escalation
+
+Health endpoint /v1/models returns router-escalate
+
+STT/TTS:
+
+Option A (default): systemd units for both, with venvs
+
+Option B: Docker services with host network
+
+Firewall (ufw): open 8080 (UI) on LAN; leave 11434, 1338, 5002, 5003 local-only by default
+
+Echoes: clear step banners and success/failure summaries
+
+Configuration management
+
+At the very start, the installer must enter an interrogation step and ask the user for key inputs: server IP address, domain name(s) for nginx, Tavily API key (and where to get it: tavily.com), any other API keys, and ports for each service
+
+Offer recommended defaults for ports: 11434 Ollama, 8080 WebUI, 1338 Router, 5002 STT, 5003 TTS
+
+After user confirmation, write all accepted values to a single main config file at ~/.local-ai-stack/config.env (create directory if missing)
+
+On subsequent runs, auto-load config.env and only prompt to change values if --reconfigure is passed
+
+All scripts must source ~/.local-ai-stack/config.env so settings persist across reboots and re-runs
+
+Interactive flags (with sensible defaults)
+
+--pull-vision (also pull qwen2.5-vl)
+
+--stt-backend=[venv|docker] (default venv)
+
+--tts-backend=[venv|docker] (default venv)
+
+--front-model=… --back-model=…
+
+--router-port=1338 --webui-port=8080 --stt-port=5002 --tts-port=5003
+
+--domain-ui=ai.example.com --domain-api=api.example.com
+
+--tavily-key=<KEY> (optional)
+
+--noninteractive (no prompts, use config.env)
+
+--reconfigure (force re-run of the interrogation step and rewrite config.env)
+
+nginx forward proxy
+
+Install nginx and (optionally) certbot for TLS
+
+Create site files for two server names: domain-ui → proxy_pass to http://127.0.0.1:<WEBUI_PORT>, and domain-api → proxy_pass to http://127.0.0.1:<ROUTER_PORT>/v1
+Include typical reverse-proxy hardening: proxy_timeout, client_max_body_size 50m, proxy_buffering off for streaming, X-Forwarded-* headers
+
+If user opts into TLS and provides domain names, run certbot to obtain/renew certs; configure 80 → 443 redirect; make renewal idempotent
+
+If no domains provided, skip nginx or set it up in HTTP-only mode and print follow-up steps to add TLS later
+
+Health checks (must run at end)
+curl -s http://127.0.0.1:11434/api/tags
+curl -s http://127.0.0.1:1338/v1/models
+curl -s http://127.0.0.1:8080
+STT: POST small wav to /transcribe (expect JSON text)
+TTS: GET /speak?q=hello (returns WAV bytes)
+nginx: curl -I https://<domain-ui> returns 200 or 302 to /login; curl -I https://<domain-api>/v1/models returns 200
+Print next steps and URLs
+
+Repo structure
+README.md
+LICENSE
+install.sh
+scripts/
+check_prereqs.sh
+interrogate_config.sh
+install_ollama.sh
+setup_openwebui.sh
+setup_router.sh
+setup_stt.sh
+setup_tts.sh
+setup_nginx.sh
+health_checks.sh
+ollama-webui/
+docker-compose.yml
+llama-router/
+docker-compose.yml
+Dockerfile
+requirements.txt
+router.py
+voice/
+stt/ (venv or Dockerfile + stt_server.py)
+tts/ (venv or Dockerfile + tts_server.py + voice assets)
+systemd/
+stt.service
+tts.service
+nginx/
+ai.conf
+api.conf
+
+Acceptance criteria
+After bash install.sh:
+
+Open WebUI reachable at http://<server-ip>:<webui-port> and via https://<domain-ui> if configured
+WebUI shows Ollama models and OpenAI model router-escalate
+
+Chatting with router-escalate:
+
+Easy prompts answered by front model
+
+Research prompts show real URLs (Tavily on)
+
+Logs show SEARCHING… and ESCALATING… when appropriate
+
+STT /transcribe works; TTS /speak?q=Hello returns audio
+
+nginx forwards domain-ui → WebUI and domain-api → router
+
+Configuration persisted in ~/.local-ai-stack/config.env; re-running installer uses it without re-prompting unless --reconfigure is passed
+
+Re-running installer leaves services healthy (idempotent)
+
+Nice-to-haves
+
+Uninstaller cleanup.sh (tears down containers, optional data wipe)
+
+make targets: make up, make down, make logs
+
+Optional LiteLLM Proxy front on :4000/v1 with model alias router-escalate
+
+Optional vision front-model toggle
