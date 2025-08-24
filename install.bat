@@ -16,7 +16,7 @@ echo or other WSL2 distributions.
 echo.
 echo For WSL2 installation, visit: https://docs.microsoft.com/en-us/windows/wsl/install
 echo.
-echo Other usages are unsupported.
+echo Other environments are unsupported.
 echo.
 echo Press any key to continue...
 pause >nul
