@@ -22,7 +22,7 @@ git clone <your-repo-url>
 cd HomeAI
 
 # Make installer executable and run
-chmod +x install.sh
+chmod +x install.sh scripts/*.sh cleanup.sh
 ./install.sh
 ```
 

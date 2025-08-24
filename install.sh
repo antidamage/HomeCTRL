@@ -172,6 +172,47 @@ check_root() {
     fi
 }
 
+# Check script permissions and fix if needed
+check_script_permissions() {
+    local script_dir="$SCRIPT_DIR/scripts"
+    local scripts=(
+        "interrogate_config.sh"
+        "check_prereqs.sh"
+        "install_ollama.sh"
+        "setup_openwebui.sh"
+        "setup_router.sh"
+        "setup_stt.sh"
+        "setup_tts.sh"
+        "setup_nginx.sh"
+        "health_checks.sh"
+    )
+    
+    local needs_fix=false
+    
+    for script in "${scripts[@]}"; do
+        if [[ ! -x "$script_dir/$script" ]]; then
+            needs_fix=true
+            break
+        fi
+    done
+    
+    if [[ "$needs_fix" == true ]]; then
+        log_warning "Script permissions need to be fixed..."
+        log_info "Attempting to fix script permissions..."
+        
+        if chmod +x "$script_dir"/*.sh 2>/dev/null; then
+            log_success "Script permissions fixed successfully"
+        else
+            log_error "Failed to fix script permissions automatically"
+            log_info "Please run the following command manually:"
+            log_info "  chmod +x scripts/*.sh"
+            log_info "Then run the installer again:"
+            log_info "  ./install.sh"
+            exit 1
+        fi
+    fi
+}
+
 # Check Ubuntu version
 check_ubuntu() {
     if [[ ! -f /etc/os-release ]]; then
@@ -253,6 +294,8 @@ EOF
 main() {
     log_step "Local AI Stack Installer"
     log_info "Starting installation process..."
+    log_info "Note: This installer will run as a regular user and use sudo when needed"
+    log_info "Do NOT run this script with sudo - it will handle elevated privileges automatically"
     
     # Parse arguments
     parse_args "$@"
@@ -260,6 +303,7 @@ main() {
     # Pre-flight checks
     check_root
     check_ubuntu
+    check_script_permissions
     
     # Create config directory
     create_config_dir

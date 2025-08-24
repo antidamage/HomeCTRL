@@ -20,7 +20,7 @@ A comprehensive, guided installer for setting up a full local AI rig on Ubuntu S
 # Clone and run
 git clone <your-repo>
 cd HomeAI
-chmod +x install.sh
+chmod +x install.sh scripts/*.sh cleanup.sh
 ./install.sh
 ```
 
@@ -32,7 +32,7 @@ wsl --install -d Ubuntu-22.04
 # Then clone and run in WSL2
 git clone <your-repo>
 cd HomeAI
-chmod +x install.sh
+chmod +x install.sh scripts/*.sh cleanup.sh
 ./install.sh
 ```
 
@@ -173,10 +173,18 @@ Removes all containers, services, and optionally data volumes.
 
 ### Common Issues
 
-1. **NVIDIA Container Toolkit**: Ensure NVIDIA drivers are installed
-2. **Port Conflicts**: Check if ports are already in use
-3. **Model Downloads**: Large models may take time; check disk space
-4. **Firewall**: Ensure ports are open on your network
+1. **Permission Denied Errors**: If you get "Permission denied" errors:
+   ```bash
+   chmod +x scripts/*.sh
+   chmod +x install.sh
+   chmod +x cleanup.sh
+   ```
+   Then run: `./install.sh` (NOT with sudo)
+
+2. **NVIDIA Container Toolkit**: Ensure NVIDIA drivers are installed
+3. **Port Conflicts**: Check if ports are already in use
+4. **Model Downloads**: Large models may take time; check disk space
+5. **Firewall**: Ensure ports are open on your network
 
 ### WSL2-Specific Issues
 
