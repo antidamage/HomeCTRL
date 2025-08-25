@@ -79,6 +79,11 @@ make status
 
 # Run health checks
 make health
+
+# Port management
+make ports-check
+make ports-cleanup
+make ports-force
 ```
 
 ## Configuration
@@ -95,6 +100,20 @@ To reconfigure:
 Use existing configuration:
 ```bash
 ./install.sh --noninteractive
+```
+
+## Accept Existing Services
+
+Skip installation for already running services:
+```bash
+./install.sh --accept-existing
+```
+
+## Combined Options
+
+Use existing config and skip running services:
+```bash
+./install.sh --noninteractive --accept-existing
 ```
 
 ## Vision Models
@@ -155,6 +174,13 @@ curl -I http://ai.example.com
 ### Common Issues
 
 1. **Port conflicts**: Check if ports are already in use
+   ```bash
+   # Check what's using the ports
+   ./scripts/manage_ports.sh check
+   
+   # Clean up port conflicts automatically
+   ./scripts/manage_ports.sh cleanup
+   ```
 2. **NVIDIA drivers**: Ensure NVIDIA drivers are installed
 3. **Model downloads**: Large models may take time
 4. **Firewall**: Ensure ports are open on your network

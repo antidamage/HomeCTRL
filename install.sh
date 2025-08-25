@@ -31,6 +31,7 @@ DOMAIN_API=""
 TAVILY_KEY=""
 NONINTERACTIVE=false
 RECONFIGURE=false
+ACCEPT_EXISTING=false
 
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -78,6 +79,7 @@ OPTIONS:
     --domain-ui=DOMAIN         Domain for WebUI (e.g., ai.example.com)
     --domain-api=DOMAIN        Router API domain (auto-generated from WebUI domain)
     --tavily-key=KEY           Tavily API key for web search
+    --accept-existing          Skip installation for already running services
     --noninteractive           Use existing config without prompts
     --reconfigure              Force reconfiguration
     -h, --help                 Show this help message
@@ -86,6 +88,8 @@ EXAMPLES:
     $0                                    # Interactive installation
     $0 --noninteractive                   # Use existing config
     $0 --reconfigure                      # Force reconfiguration
+    $0 --accept-existing                  # Skip already running services
+    $0 --noninteractive --accept-existing # Use existing config and skip running services
     $0 --pull-vision --stt-backend=docker # With vision models and Docker STT
     $0 --domain-ui=ai.example.com        # WebUI domain (Router API auto-generated)
 
@@ -142,6 +146,10 @@ parse_args() {
                 ;;
             --tavily-key=*)
                 TAVILY_KEY="${1#*=}"
+                shift
+                ;;
+            --accept-existing)
+                ACCEPT_EXISTING=true
                 shift
                 ;;
             --noninteractive)
@@ -254,6 +262,91 @@ load_config() {
     fi
 }
 
+# Check if a service is running
+is_service_running() {
+    local service_name="$1"
+    
+    case "$service_name" in
+        "ollama")
+            # Check if Ollama systemd service is running
+            if sudo systemctl is-active --quiet ollama 2>/dev/null; then
+                return 0  # Service is running
+            fi
+            # Also check if port is in use
+            if netstat -tuln 2>/dev/null | grep -q ":11434 "; then
+                return 0  # Port is in use
+            fi
+            return 1  # Service is not running
+            ;;
+        "open-webui")
+            # Check if Docker container is running
+            if docker ps --format "{{.Names}}" 2>/dev/null | grep -q "open-webui"; then
+                return 0  # Container is running
+            fi
+            # Also check if port is in use
+            if netstat -tuln 2>/dev/null | grep -q ":${WEBUI_PORT:-8080} "; then
+                return 0  # Port is in use
+            fi
+            return 1  # Service is not running
+            ;;
+        "llama-router")
+            # Check if Docker container is running
+            if docker ps --format "{{.Names}}" 2>/dev/null | grep -q "llama-router"; then
+                return 0  # Container is running
+            fi
+            # Also check if port is in use
+            if netstat -tuln 2>/dev/null | grep -q ":${ROUTER_PORT:-5001} "; then
+                return 0  # Port is in use
+            fi
+            return 1  # Service is not running
+            ;;
+        "stt")
+            # Check if systemd service is running
+            if sudo systemctl is-active --quiet stt 2>/dev/null; then
+                return 0  # Service is running
+            fi
+            # Also check if Docker container is running
+            if docker ps --format "{{.Names}}" 2>/dev/null | grep -q "stt"; then
+                return 0  # Container is running
+            fi
+            # Also check if port is in use
+            if netstat -tuln 2>/dev/null | grep -q ":${STT_PORT:-5002} "; then
+                return 0  # Port is in use
+            fi
+            return 1  # Service is not running
+            ;;
+        "tts")
+            # Check if systemd service is running
+            if sudo systemctl is-active --quiet tts 2>/dev/null; then
+                return 0  # Service is running
+            fi
+            # Also check if Docker container is running
+            if docker ps --format "{{.Names}}" 2>/dev/null | grep -q "tts"; then
+                return 0  # Container is running
+            fi
+            # Also check if port is in use
+            if netstat -tuln 2>/dev/null | grep -q ":${TTS_PORT:-5003} "; then
+                return 0  # Port is in use
+            fi
+            return 1  # Service is not running
+            ;;
+        "nginx")
+            # Check if systemd service is running
+            if sudo systemctl is-active --quiet nginx 2>/dev/null; then
+                return 0  # Service is running
+            fi
+            # Also check if port is in use
+            if netstat -tuln 2>/dev/null | grep -q ":80 " || netstat -tuln 2>/dev/null | grep -q ":443 "; then
+                return 0  # Port is in use
+            fi
+            return 1  # Service is not running
+            ;;
+        *)
+            return 1  # Unknown service
+            ;;
+    esac
+}
+
 # Save configuration
 save_config() {
     cat > "$CONFIG_FILE" << EOF
@@ -286,6 +379,7 @@ TTS_BACKEND=$TTS_BACKEND
 
 # Installation Flags
 PULL_VISION=$PULL_VISION
+ACCEPT_EXISTING=$ACCEPT_EXISTING
 EOF
 
     log_success "Configuration saved to $CONFIG_FILE"
@@ -329,27 +423,51 @@ main() {
     
     # Install Ollama
     log_step "Installing Ollama"
-    "$SCRIPT_DIR/scripts/install_ollama.sh"
+    if [[ "$ACCEPT_EXISTING" == true ]] && is_service_running "ollama"; then
+        log_info "Ollama is already running, skipping installation"
+    else
+        "$SCRIPT_DIR/scripts/install_ollama.sh"
+    fi
     
     # Setup Open WebUI
     log_step "Setting up Open WebUI"
-    "$SCRIPT_DIR/scripts/setup_openwebui.sh"
+    if [[ "$ACCEPT_EXISTING" == true ]] && is_service_running "open-webui"; then
+        log_info "Open WebUI is already running, skipping installation"
+    else
+        "$SCRIPT_DIR/scripts/setup_openwebui.sh"
+    fi
     
     # Setup Router
     log_step "Setting up Router"
-    "$SCRIPT_DIR/scripts/setup_router.sh"
+    if [[ "$ACCEPT_EXISTING" == true ]] && is_service_running "llama-router"; then
+        log_info "Router is already running, skipping installation"
+    else
+        "$SCRIPT_DIR/scripts/setup_router.sh"
+    fi
     
     # Setup STT
     log_step "Setting up Speech-to-Text"
-    "$SCRIPT_DIR/scripts/setup_stt.sh"
+    if [[ "$ACCEPT_EXISTING" == true ]] && is_service_running "stt"; then
+        log_info "STT service is already running, skipping installation"
+    else
+        "$SCRIPT_DIR/scripts/setup_stt.sh"
+    fi
     
     # Setup TTS
     log_step "Setting up Text-to-Speech"
-    "$SCRIPT_DIR/scripts/setup_tts.sh"
+    if [[ "$ACCEPT_EXISTING" == true ]] && is_service_running "tts"; then
+        log_info "TTS service is already running, skipping installation"
+    else
+        "$SCRIPT_DIR/scripts/setup_tts.sh"
+    fi
     
     # Setup Nginx
     log_step "Setting up Nginx Proxy"
-    "$SCRIPT_DIR/scripts/setup_nginx.sh"
+    if [[ "$ACCEPT_EXISTING" == true ]] && is_service_running "nginx"; then
+        log_info "Nginx is already running, skipping installation"
+    else
+        "$SCRIPT_DIR/scripts/setup_nginx.sh"
+    fi
     
     # Health checks
     log_step "Running Health Checks"
@@ -396,10 +514,15 @@ main() {
     log_info "📊 Run health checks: ./scripts/health_checks.sh"
     log_info "📝 View logs: make logs"
     log_info "🔄 Manage services: make up/down/status"
+    log_info "🔌 Port management: make ports-check/cleanup/force"
     log_info "🗑️  Uninstall: ./cleanup.sh"
     log_info ""
     log_info "Configuration saved to: $CONFIG_FILE"
     log_info "Re-run installer with --noninteractive to use existing config"
+    if [[ "$ACCEPT_EXISTING" == true ]]; then
+        log_info "Note: Some services were skipped because they were already running"
+        log_info "Use --accept-existing to preserve running services in future runs"
+    fi
 }
 
 # Run main function with all arguments

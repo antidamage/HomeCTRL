@@ -24,6 +24,14 @@ help: ## Show this help message
 	@echo "  make restart         # Restart all services"
 	@echo "  make status          # Show status of all services"
 	@echo ""
+	@echo "Port Management:"
+	@echo "  make ports-check     # Check current port usage"
+	@echo "  make ports-cleanup   # Clean up port conflicts"
+	@echo "  make ports-force     # Force kill all processes on service ports"
+	@echo ""
+	@echo "Testing and Demo:"
+	@echo "  make test-accept-existing # Test --accept-existing functionality
+	@echo ""
 	@echo "Individual Services:"
 	@echo "  make up-ollama       # Start Ollama service"
 	@echo "  make up-webui        # Start Open WebUI"
@@ -43,6 +51,9 @@ help: ## Show this help message
 	@echo "  make health          # Run health checks"
 	@echo "  make clean           # Clean up containers and volumes"
 	@echo "  make install         # Run full installation"
+	@echo "  make install-accept-existing      # Run installation accepting existing services"
+	@echo "  make install-noninteractive       # Run non-interactive installation"
+	@echo "  make install-noninteractive-accept # Run non-interactive installation accepting existing services"
 	@echo "  make uninstall       # Remove all services and data"
 
 # Start all services
@@ -176,6 +187,34 @@ health: ## Run health checks
 	@echo "Running health checks..."
 	@./scripts/health_checks.sh
 
+# Port management
+ports-check: ## Check current port usage
+	@echo "Checking port usage..."
+	@./scripts/manage_ports.sh check
+
+ports-cleanup: ## Clean up port conflicts
+	@echo "Cleaning up port conflicts..."
+	@./scripts/manage_ports.sh cleanup
+
+ports-force: ## Force kill all processes on service ports
+	@echo "Force cleaning up all service ports..."
+	@./scripts/manage_ports.sh force
+
+# Test and demo
+test-accept-existing: ## Test --accept-existing functionality
+	@echo "Testing --accept-existing functionality..."
+	@echo ""
+	@echo "This demonstrates how the installer can skip already running services:"
+	@echo ""
+	@echo "Available installation options:"
+	@echo "  ./install.sh                                    # Interactive installation"
+	@echo "  ./install.sh --noninteractive                   # Use existing config"
+	@echo "  ./install.sh --accept-existing                  # Skip running services"
+	@echo "  ./install.sh --noninteractive --accept-existing # Both options"
+	@echo ""
+	@echo "For more help:"
+	@echo "  ./install.sh --help"
+
 # Clean up
 clean: ## Clean up containers and volumes
 	@echo "Cleaning up containers and volumes..."
@@ -188,6 +227,18 @@ clean: ## Clean up containers and volumes
 install: ## Run full installation
 	@echo "Running full AI stack installation..."
 	@./install.sh
+
+install-accept-existing: ## Run installation accepting existing services
+	@echo "Running AI stack installation (accepting existing services)..."
+	@./install.sh --accept-existing
+
+install-noninteractive: ## Run non-interactive installation
+	@echo "Running non-interactive AI stack installation..."
+	@./install.sh --noninteractive
+
+install-noninteractive-accept: ## Run non-interactive installation accepting existing services
+	@echo "Running non-interactive AI stack installation (accepting existing services)..."
+	@./install.sh --noninteractive --accept-existing
 
 uninstall: ## Remove all services and data
 	@echo "Uninstalling AI stack..."

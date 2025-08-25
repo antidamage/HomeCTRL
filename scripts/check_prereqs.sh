@@ -224,6 +224,137 @@ configure_firewall() {
     log_success "Firewall configured successfully"
 }
 
+# Check and clean up port conflicts
+check_port_conflicts() {
+    log_info "Checking for port conflicts..."
+    
+    # Load configuration if available
+    if [[ -f "$HOME/.local-ai-stack/config.env" ]]; then
+        source "$HOME/.local-ai-stack/config.env"
+    fi
+    
+    # Default ports if not configured
+    local ollama_port=${OLLAMA_PORT:-11434}
+    local webui_port=${WEBUI_PORT:-8080}
+    local router_port=${ROUTER_PORT:-5001}
+    local stt_port=${STT_PORT:-5002}
+    local tts_port=${TTS_PORT:-5003}
+    
+    local ports_to_check=(
+        "$ollama_port:Ollama"
+        "$webui_port:Open WebUI"
+        "$router_port:Router"
+        "$stt_port:STT Service"
+        "$tts_port:TTS Service"
+    )
+    
+    local cleanup_needed=false
+    
+    # Check each port
+    for port_service in "${ports_to_check[@]}"; do
+        local port="${port_service%:*}"
+        local service="${port_service#*:}"
+        
+        if netstat -tuln 2>/dev/null | grep -q ":$port "; then
+            log_warning "Port $port is in use by $service"
+            cleanup_needed=true
+        fi
+    done
+    
+    if [[ "$cleanup_needed" == "false" ]]; then
+        log_success "All required ports are available"
+        return 0
+    fi
+    
+    log_info "Port conflicts detected. Attempting to clean up existing services..."
+    
+    # Try to stop existing services
+    for port_service in "${ports_to_check[@]}"; do
+        local port="${port_service%:*}"
+        local service="${port_service#*:}"
+        
+        if netstat -tuln 2>/dev/null | grep -q ":$port "; then
+            log_info "Cleaning up port $port for $service..."
+            
+            # Stop Docker containers
+            local containers=$(docker ps --format "{{.Names}}" --filter "publish=$port" 2>/dev/null || true)
+            if [[ -n "$containers" ]]; then
+                log_info "Stopping Docker containers on port $port: $containers"
+                for container in $containers; do
+                    docker stop "$container" 2>/dev/null || true
+                    docker rm "$container" 2>/dev/null || true
+                done
+            fi
+            
+            # Kill Python processes
+            local pids=$(netstat -tuln 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d'/' -f1 | grep -v "^$" || true)
+            if [[ -n "$pids" ]]; then
+                for pid in $pids; do
+                    local process_name=$(ps -p "$pid" -o comm= 2>/dev/null || echo "unknown")
+                    if [[ "$process_name" == "python"* ]] || [[ "$process_name" == "uvicorn"* ]] || [[ "$process_name" == "gunicorn"* ]]; then
+                        log_info "Killing Python process $pid on port $port"
+                        kill -9 "$pid" 2>/dev/null || true
+                    fi
+                done
+            fi
+            
+            # Stop systemd services if they exist
+            case "$service" in
+                "Ollama")
+                    if sudo systemctl list-units --full --all | grep -q "ollama"; then
+                        log_info "Stopping Ollama systemd service"
+                        sudo systemctl stop ollama 2>/dev/null || true
+                        sudo systemctl disable ollama 2>/dev/null || true
+                    fi
+                    ;;
+                "STT Service")
+                    if sudo systemctl list-units --full --all | grep -q "stt"; then
+                        log_info "Stopping STT systemd service"
+                        sudo systemctl stop stt 2>/dev/null || true
+                        sudo systemctl disable stt 2>/dev/null || true
+                    fi
+                    ;;
+                "TTS Service")
+                    if sudo systemctl list-units --full --all | grep -q "tts"; then
+                        log_info "Stopping TTS systemd service"
+                        sudo systemctl stop tts 2>/dev/null || true
+                        sudo systemctl disable tts 2>/dev/null || true
+                    fi
+                    ;;
+            esac
+        fi
+    done
+    
+    # Wait for cleanup
+    sleep 3
+    
+    # Final check
+    log_info "Final port availability check..."
+    local all_clean=true
+    
+    for port_service in "${ports_to_check[@]}"; do
+        local port="${port_service%:*}"
+        local service="${port_service#*:}"
+        
+        if netstat -tuln 2>/dev/null | grep -q ":$port "; then
+            log_warning "Port $port is still in use by $service"
+            all_clean=false
+        else
+            log_success "Port $port is now available for $service"
+        fi
+    done
+    
+    if [[ "$all_clean" == "true" ]]; then
+        log_success "All ports are now available!"
+        return 0
+    else
+        log_warning "Some ports are still in use after cleanup"
+        log_info "You may need to manually stop services or choose different ports"
+        log_info "Run './scripts/manage_ports.sh check' to see what's using the ports"
+        return 0  # Continue anyway, user can handle manually
+    fi
+}
+
 # Create project directories
 create_directories() {
     log_info "Creating project directories..."
@@ -324,6 +455,9 @@ main() {
     
     # Configure firewall
     configure_firewall
+    
+    # Check and clean up port conflicts
+    check_port_conflicts
     
     # Create project directories
     create_directories

@@ -80,6 +80,18 @@ Prompts for configuration values with sensible defaults.
 ```
 Uses existing configuration from `~/.local-ai-stack/config.env`.
 
+### Accept Existing Services
+```bash
+./install.sh --accept-existing
+```
+Skips installation for services that are already running. Useful for preserving existing services while adding new ones.
+
+### Combined Options
+```bash
+./install.sh --noninteractive --accept-existing
+```
+Uses existing configuration and skips already running services.
+
 ### Reconfigure
 ```bash
 ./install.sh --reconfigure
@@ -198,6 +210,23 @@ make logs-router
 ./scripts/health_checks.sh
 ```
 
+### Port Management
+```bash
+# Check current port usage
+./scripts/manage_ports.sh check
+
+# Clean up port conflicts
+./scripts/manage_ports.sh cleanup
+
+# Force kill all processes on service ports
+./scripts/manage_ports.sh force
+
+# Or use make commands
+make ports-check
+make ports-cleanup
+make ports-force
+```
+
 ## Uninstallation
 
 ```bash
@@ -232,6 +261,16 @@ Removes all containers, services, and optionally data volumes.
 
 4. **NVIDIA Container Toolkit**: Ensure NVIDIA drivers are installed
 5. **Port Conflicts**: Check if ports are already in use
+   ```bash
+   # Check what's using the ports
+   ./scripts/manage_ports.sh check
+   
+   # Clean up port conflicts automatically
+   ./scripts/manage_ports.sh cleanup
+   
+   # Force kill all processes on service ports
+   ./scripts/manage_ports.sh force
+   ```
 6. **Model Downloads**: Large models may take time; check disk space
 7. **Firewall**: Ensure ports are open on your network
 8. **Let's Encrypt Issues**: If certificate generation fails:
