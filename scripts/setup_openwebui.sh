@@ -36,7 +36,7 @@ setup_openwebui() {
     
     # Create docker-compose.yml
     cat > docker-compose.yml << EOF
-version: '3.8'
+# Docker Compose version is no longer needed in recent versions
 services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:main

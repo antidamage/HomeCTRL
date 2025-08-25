@@ -134,6 +134,21 @@ install_docker() {
     sudo systemctl start docker
     sudo systemctl enable docker
     
+    # Verify Docker Compose plugin
+    if ! docker compose version >/dev/null 2>&1; then
+        log_info "Installing Docker Compose plugin..."
+        sudo apt-get update
+        sudo apt-get install -y docker-compose-plugin
+    fi
+    
+    # Add user to docker group if not already added
+    if ! groups | grep -q docker; then
+        log_info "Adding user to docker group..."
+        sudo usermod -aG docker "$USER"
+        log_warning "You need to log out and back in for docker group changes to take effect"
+        log_warning "Or run: newgrp docker"
+    fi
+    
     log_success "Docker installed and started successfully"
 }
 
@@ -179,7 +194,7 @@ install_python_packages() {
     python3 -m pip install --upgrade pip
     
     # Install required Python packages
-    python3 -m pip install --user docker-compose
+    # Note: docker-compose is now handled by the Docker Compose plugin
     
     log_success "Python packages installed successfully"
 }

@@ -290,7 +290,7 @@ EOF
 
     # Create docker-compose.yml
     cat > docker-compose.yml << EOF
-version: '3.8'
+# Docker Compose version is no longer needed in recent versions
 services:
   router:
     build: .

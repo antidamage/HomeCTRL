@@ -181,10 +181,22 @@ Removes all containers, services, and optionally data volumes.
    ```
    Then run: `./install.sh` (NOT with sudo)
 
-2. **NVIDIA Container Toolkit**: Ensure NVIDIA drivers are installed
-3. **Port Conflicts**: Check if ports are already in use
-4. **Model Downloads**: Large models may take time; check disk space
-5. **Firewall**: Ensure ports are open on your network
+2. **Docker Permission Errors**: If you get "permission denied while trying to connect to the Docker daemon":
+   ```bash
+   # Add your user to the docker group
+   sudo usermod -aG docker $USER
+   
+   # Log out and back in, OR run this command:
+   newgrp docker
+   ```
+   The installer will automatically add you to the docker group, but you may need to log out and back in.
+
+3. **Docker Compose Version Warnings**: The installer now uses modern Docker Compose syntax without the obsolete `version` field.
+
+4. **NVIDIA Container Toolkit**: Ensure NVIDIA drivers are installed
+5. **Port Conflicts**: Check if ports are already in use
+6. **Model Downloads**: Large models may take time; check disk space
+7. **Firewall**: Ensure ports are open on your network
 
 ### WSL2-Specific Issues
 
