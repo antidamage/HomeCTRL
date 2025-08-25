@@ -45,10 +45,22 @@ chmod +x install.sh scripts/*.sh cleanup.sh
 
 After installation, access your services at:
 
-- **WebUI**: http://your-server-ip:8080
-- **Router API**: http://your-server-ip:1338/v1
-- **STT Service**: http://your-server-ip:5002
-- **TTS Service**: http://your-server-ip:5003
+### Local Access (Recommended)
+- **WebUI**: http://localhost
+- **Router API**: http://localhost/api/
+- **STT Service**: http://localhost/stt/
+- **TTS Service**: http://localhost/tts/
+
+### Direct Port Access
+- **WebUI**: http://localhost:8080
+- **Router API**: http://localhost:1338/v1
+- **STT Service**: http://localhost:5002
+- **TTS Service**: http://localhost:5003
+
+### Domain Access (if configured)
+If you configured domains during installation, you can also access via:
+- **WebUI**: https://yourdomain.com
+- **Router API**: https://api.yourdomain.com/v1
 
 ## Quick Commands
 
@@ -101,9 +113,41 @@ Choose backend for STT/TTS:
 
 ## Domain Setup
 
-Configure domain for HTTPS (Router API will use api.yourdomain.com automatically):
+### Local-Only Setup (Recommended)
+For most users, leave the domain blank during installation. All services will be accessible via:
+- **WebUI**: http://localhost
+- **Router API**: http://localhost/api/
+- **STT Service**: http://localhost/stt/
+- **TTS Service**: http://localhost/tts/
+
+### Domain Setup (Optional)
+If you want HTTPS and external access, configure a domain:
 ```bash
 ./install.sh --domain-ui=ai.example.com
+```
+
+**Domain Setup Requirements:**
+1. **DNS Configuration**: Point your domain's A record to this server's IP address
+2. **Port 80 Access**: Ensure port 80 is open on your firewall/router
+3. **DNS Propagation**: Wait for DNS changes to propagate (can take up to 24 hours)
+4. **SSL Certificates**: The installer will automatically generate Let's Encrypt certificates
+
+**Example DNS Records:**
+```
+ai.example.com     A     YOUR_SERVER_IP
+api.example.com    A     YOUR_SERVER_IP  (auto-generated)
+```
+
+**Troubleshooting Domain Issues:**
+```bash
+# Check domain resolution
+nslookup ai.example.com
+
+# Test connectivity
+curl -I http://ai.example.com
+
+# Run the troubleshooting script
+./scripts/troubleshoot_letsencrypt.sh
 ```
 
 ## Troubleshooting
@@ -132,10 +176,10 @@ Configure domain for HTTPS (Router API will use api.yourdomain.com automatically
 
 ## Next Steps
 
-1. **Test the WebUI**: Open http://your-server-ip:8080
+1. **Test the WebUI**: Open http://localhost
 2. **Try the Router**: Chat with `router-escalate` model
 3. **Test STT/TTS**: Use the health endpoints
-4. **Configure domains**: Set up HTTPS with Let's Encrypt
+4. **Optional**: Configure domains for HTTPS with Let's Encrypt
 5. **Customize models**: Add your preferred models
 
 ## Support

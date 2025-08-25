@@ -102,6 +102,43 @@ Choose between `venv` (default) or `docker` for STT/TTS services.
 
 All settings are stored in `~/.local-ai-stack/config.env`:
 
+### Local-Only Setup (Recommended)
+For most users, leave the domain blank during installation. All services will be accessible via:
+- **WebUI**: http://localhost
+- **Router API**: http://localhost/api/
+- **STT Service**: http://localhost/stt/
+- **TTS Service**: http://localhost/tts/
+
+### Domain Setup (Optional)
+If you want HTTPS and external access, configure a domain:
+```bash
+./install.sh --domain-ui=ai.example.com
+```
+
+**Domain Setup Requirements:**
+1. **DNS Configuration**: Point your domain's A record to this server's IP address
+2. **Port 80 Access**: Ensure port 80 is open on your firewall/router
+3. **DNS Propagation**: Wait for DNS changes to propagate (can take up to 24 hours)
+4. **SSL Certificates**: The installer will automatically generate Let's Encrypt certificates
+
+**Example DNS Records:**
+```
+ai.example.com     A     YOUR_SERVER_IP
+api.example.com    A     YOUR_SERVER_IP  (auto-generated)
+```
+
+**Troubleshooting Domain Issues:**
+```bash
+# Check domain resolution
+nslookup ai.example.com
+
+# Test connectivity
+curl -I http://ai.example.com
+
+# Run the troubleshooting script
+./scripts/troubleshoot_letsencrypt.sh
+```
+
 ```bash
 # Server Configuration
 SERVER_IP=192.168.1.100
@@ -197,6 +234,11 @@ Removes all containers, services, and optionally data volumes.
 5. **Port Conflicts**: Check if ports are already in use
 6. **Model Downloads**: Large models may take time; check disk space
 7. **Firewall**: Ensure ports are open on your network
+8. **Let's Encrypt Issues**: If certificate generation fails:
+   - Ensure port 80 is open and accessible from the internet
+   - Verify your domain points to this server's IP address
+   - Check DNS propagation: `nslookup yourdomain.com`
+   - Try staging first: `sudo certbot certonly --standalone -d yourdomain.com --staging`
 
 ### WSL2-Specific Issues
 

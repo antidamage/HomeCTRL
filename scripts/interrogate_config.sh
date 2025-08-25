@@ -87,10 +87,10 @@ get_server_ip() {
 # Get domain configuration
 get_domain_config() {
     log_info "Domain Configuration (optional - press Enter to skip)"
-    log_info "If you have a domain name, we can set up HTTPS with Let's Encrypt"
-    log_info "The Router API will automatically use a subdomain (e.g., api.yourdomain.com)"
+    log_info "Leave blank for local-only setup (recommended for most users)"
+    log_info "Only configure domains if you want HTTPS and external access"
     
-    read -p "Enter domain for WebUI (e.g., ai.example.com): " DOMAIN_UI
+    read -p "Enter domain for WebUI (e.g., ai.example.com) or press Enter for local-only: " DOMAIN_UI
     
     # Automatically generate API domain from WebUI domain
     if [[ -n "$DOMAIN_UI" ]]; then
@@ -106,8 +106,23 @@ get_domain_config() {
         
         log_info "Router API will be available at: $DOMAIN_API"
         log_info "TLS will be configured for both domains"
+        
+        # Verify domain format
+        if [[ "$DOMAIN_UI" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
+            log_success "Domain format is valid"
+        else
+            log_warning "Domain format may be invalid - ensure it's a proper domain name"
+        fi
+        
+        # Show domain setup instructions
+        log_info "Domain Setup Instructions:"
+        log_info "1. Point your domain's A record to this server's IP: $SERVER_IP"
+        log_info "2. Ensure port 80 is open on your firewall/router"
+        log_info "3. Wait for DNS propagation (can take up to 24 hours)"
+        log_info "4. The installer will attempt to generate SSL certificates"
     else
-        log_info "No domain provided - HTTP-only mode will be used"
+        log_info "Local-only mode selected - all services will be accessible via localhost"
+        log_info "No domain configuration or SSL setup will be performed"
     fi
 }
 

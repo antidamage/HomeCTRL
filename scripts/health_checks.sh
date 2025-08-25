@@ -234,6 +234,43 @@ generate_report() {
     
     if [[ $passed_tests -eq $total_tests ]]; then
         log_success "All services are healthy! Your AI stack is ready to use."
+        
+        # Show access information
+        log_step "Access Your AI Stack"
+        
+        if [[ -n "${DOMAIN_UI:-}" ]] && [[ -n "${DOMAIN_API:-}" ]]; then
+            log_info "🌐 Domain Access (HTTPS):"
+            log_info "  WebUI: https://$DOMAIN_UI"
+            log_info "  Router API: https://$DOMAIN_API/v1"
+            log_info "  STT Service: https://$DOMAIN_UI/stt/"
+            log_info "  TTS Service: https://$DOMAIN_UI/tts/"
+            log_info ""
+            log_info "🏠 Local Access (HTTP):"
+            log_info "  WebUI: http://localhost"
+            log_info "  Router API: http://localhost/api/"
+            log_info "  STT Service: http://localhost/stt/"
+            log_info "  TTS Service: http://localhost/tts/"
+        else
+            log_info "🏠 Local Access (HTTP):"
+            log_info "  WebUI: http://localhost"
+            log_info "  Router API: http://localhost/api/"
+            log_info "  STT Service: http://localhost/stt/"
+            log_info "  TTS Service: http://localhost/tts/"
+            log_info ""
+            log_info "  Direct Port Access:"
+            log_info "    WebUI: http://localhost:$WEBUI_PORT"
+            log_info "    Router API: http://localhost:$ROUTER_PORT/v1"
+            log_info "    STT Service: http://localhost:$STT_PORT"
+            log_info "    TTS Service: http://localhost:$TTS_PORT"
+        fi
+        
+        log_info ""
+        log_info "🚀 Quick Start:"
+        log_info "  1. Open your browser and go to: http://localhost"
+        log_info "  2. Try chatting with the 'router-escalate' model"
+        log_info "  3. Test STT/TTS endpoints if needed"
+        log_info "  4. Enjoy your local AI stack!"
+        
     else
         log_warning "Some services have issues. Check the logs above for details."
         log_info "Useful debugging commands:"
