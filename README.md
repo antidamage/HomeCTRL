@@ -55,7 +55,7 @@ chmod +x install.sh scripts/*.sh cleanup.sh
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Open WebUI    │    │   Router        │    │   Ollama        │
-│   Port: 8080    │◄──►│   Port: 1338    │◄──►│   Port: 11434   │
+│   Port: 8080    │◄──►│   Port: 5001    │◄──►│   Port: 11434   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          │                       │                       │
@@ -148,7 +148,7 @@ DOMAIN_API=api.example.com
 # Service Ports
 OLLAMA_PORT=11434
 WEBUI_PORT=8080
-ROUTER_PORT=1338
+ROUTER_PORT=5001
 STT_PORT=5002
 TTS_PORT=5003
 

@@ -53,7 +53,7 @@ After installation, access your services at:
 
 ### Direct Port Access
 - **WebUI**: http://localhost:8080
-- **Router API**: http://localhost:1338/v1
+- **Router API**: http://localhost:5001/v1
 - **STT Service**: http://localhost:5002
 - **TTS Service**: http://localhost:5003
 
@@ -193,7 +193,7 @@ curl -I http://ai.example.com
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Open WebUI    │    │   Router        │    │   Ollama        │
-│   Port: 8080    │◄──►│   Port: 1338    │◄──►│   Port: 11434   │
+│   Port: 8080    │◄──►│   Port: 5001    │◄──►│   Port: 11434   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          │                       │                       │

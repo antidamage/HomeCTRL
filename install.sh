@@ -22,7 +22,7 @@ STT_BACKEND="venv"
 TTS_BACKEND="venv"
 FRONT_MODEL="llama3:8b"
 BACK_MODEL="qwen2.5:14b-instruct"
-ROUTER_PORT=1338
+ROUTER_PORT=5001
 WEBUI_PORT=8080
 STT_PORT=5002
 TTS_PORT=5003
@@ -71,7 +71,7 @@ OPTIONS:
     --tts-backend=TYPE         TTS backend: venv (default) or docker
     --front-model=MODEL        Front model for router (default: llama3:8b)
     --back-model=MODEL         Back model for router (default: qwen2.5:14b-instruct)
-    --router-port=PORT         Router port (default: 1338)
+    --router-port=PORT         Router port (default: 5001)
     --webui-port=PORT          WebUI port (default: 8080)
     --stt-port=PORT            STT port (default: 5002)
     --tts-port=PORT            TTS port (default: 5003)

@@ -25,7 +25,7 @@ log_step() {
 CONFIG_FILE="$HOME/.local-ai-stack/config.env"
 source "$CONFIG_FILE"
 
-ROUTER_PORT=${ROUTER_PORT:-1338}
+ROUTER_PORT=${ROUTER_PORT:-5001}
 FRONT_MODEL=${FRONT_MODEL:-"llama3:8b"}
 BACK_MODEL=${BACK_MODEL:-"qwen2.5:14b-instruct"}
 TAVILY_KEY=${TAVILY_KEY:-""}

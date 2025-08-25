@@ -11,7 +11,7 @@ endif
 
 # Default values
 WEBUI_PORT ?= 8080
-ROUTER_PORT ?= 1338
+ROUTER_PORT ?= 5001
 STT_PORT ?= 5002
 TTS_PORT ?= 5003
 

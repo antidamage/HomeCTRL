@@ -27,7 +27,7 @@ source "$CONFIG_FILE"
 
 WEBUI_PORT=${WEBUI_PORT:-8080}
 OLLAMA_PORT=${OLLAMA_PORT:-11434}
-ROUTER_PORT=${ROUTER_PORT:-1338}
+ROUTER_PORT=${ROUTER_PORT:-5001}
 
 setup_openwebui() {
     log_step "Setting up Open WebUI"

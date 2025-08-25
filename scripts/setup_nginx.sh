@@ -16,6 +16,14 @@ log_success() {
     echo -e "\033[0;32m[SUCCESS]\033[0m $1"
 }
 
+log_warning() {
+    echo -e "\033[0;33m[WARNING]\033[0m $1"
+}
+
+log_error() {
+    echo -e "\033[0;31m[ERROR]\033[0m $1"
+}
+
 log_step() {
     echo -e "\n\033[0;34m═══════════════════════════════════════════════════════════════\033[0m"
     echo -e "\033[0;34m  $1\033[0m"
@@ -28,7 +36,7 @@ source "$CONFIG_FILE"
 DOMAIN_UI=${DOMAIN_UI:-""}
 DOMAIN_API=${DOMAIN_API:-""}
 WEBUI_PORT=${WEBUI_PORT:-8080}
-ROUTER_PORT=${ROUTER_PORT:-1338}
+ROUTER_PORT=${ROUTER_PORT:-5001}
 
 setup_nginx() {
     log_step "Setting up Nginx Reverse Proxy"
@@ -36,6 +44,15 @@ setup_nginx() {
     # Create nginx configuration directory
     sudo mkdir -p /etc/nginx/sites-available
     sudo mkdir -p /etc/nginx/sites-enabled
+    
+    # Clean up any existing SSL configurations that might cause issues
+    if [[ -z "$DOMAIN_UI" ]] || [[ -z "$DOMAIN_API" ]]; then
+        log_info "Cleaning up any existing SSL configurations..."
+        sudo rm -f /etc/nginx/sites-enabled/ai.conf
+        sudo rm -f /etc/nginx/sites-enabled/api.conf
+        sudo rm -f /etc/nginx/sites-available/ai.conf
+        sudo rm -f /etc/nginx/sites-available/api.conf
+    fi
     
     # Create main nginx configuration
     if [[ -n "$DOMAIN_UI" ]] && [[ -n "$DOMAIN_API" ]]; then

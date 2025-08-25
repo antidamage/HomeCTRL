@@ -40,7 +40,7 @@ DOMAIN_UI=""
 DOMAIN_API=""
 OLLAMA_PORT=11434
 WEBUI_PORT=8080
-ROUTER_PORT=1338
+ROUTER_PORT=5001
 STT_PORT=5002
 TTS_PORT=5003
 TAVILY_KEY=""
@@ -130,6 +130,7 @@ get_domain_config() {
 get_port_config() {
     log_info "Port Configuration"
     log_info "Default ports are recommended for most installations"
+    log_info "Current defaults: Ollama(11434), WebUI(8080), Router(5001), STT(5002), TTS(5003)"
     
     read -p "Use default ports? (Y/n): " -r
     if [[ $REPLY =~ ^[Nn]$ ]]; then
