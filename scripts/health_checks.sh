@@ -6,7 +6,29 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../install.sh" 2>/dev/null || true
+
+# Define logging functions locally to avoid sourcing issues
+log_info() {
+    echo -e "\033[0;34m[INFO]\033[0m $1"
+}
+
+log_success() {
+    echo -e "\033[0;32m[SUCCESS]\033[0m $1"
+}
+
+log_warning() {
+    echo -e "\033[1;33m[WARNING]\033[0m $1"
+}
+
+log_error() {
+    echo -e "\033[0;31m[ERROR]\033[0m $1"
+}
+
+log_step() {
+    echo -e "\n\033[0;34m═══════════════════════════════════════════════════════════════\033[0m"
+    echo -e "\033[0;34m  $1\033[0m"
+    echo -e "\033[0;34m═══════════════════════════════════════════════════════════════\033[0m\n"
+}
 
 CONFIG_FILE="$HOME/.local-ai-stack/config.env"
 source "$CONFIG_FILE"

@@ -5,9 +5,31 @@
 
 set -euo pipefail
 
-# Source the main installer functions
+# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../install.sh" 2>/dev/null || true
+
+# Define logging functions locally to avoid sourcing issues
+log_info() {
+    echo -e "\033[0;34m[INFO]\033[0m $1"
+}
+
+log_success() {
+    echo -e "\033[0;32m[SUCCESS]\033[0m $1"
+}
+
+log_warning() {
+    echo -e "\033[1;33m[WARNING]\033[0m $1"
+}
+
+log_error() {
+    echo -e "\033[0;31m[ERROR]\033[0m $1"
+}
+
+log_step() {
+    echo -e "\n\033[0;34m═══════════════════════════════════════════════════════════════\033[0m"
+    echo -e "\033[0;34m  $1\033[0m"
+    echo -e "\033[0;34m═══════════════════════════════════════════════════════════════\033[0m\n"
+}
 
 # Configuration file
 CONFIG_FILE="$HOME/.local-ai-stack/config.env"
@@ -294,6 +316,43 @@ main() {
     
     log_success "Configuration saved successfully!"
     log_info "You can now proceed with the installation."
+}
+
+# Save configuration function (defined locally to avoid sourcing issues)
+save_config() {
+    cat > "$CONFIG_FILE" << EOF
+# Local AI Stack Configuration
+# Generated on $(date)
+
+# Server Configuration
+SERVER_IP=$SERVER_IP
+DOMAIN_UI=$DOMAIN_UI
+DOMAIN_API=$DOMAIN_API
+
+# Service Ports
+OLLAMA_PORT=$OLLAMA_PORT
+WEBUI_PORT=$WEBUI_PORT
+ROUTER_PORT=$ROUTER_PORT
+STT_PORT=$STT_PORT
+TTS_PORT=$TTS_PORT
+
+# API Keys
+TAVILY_API_KEY=$TAVILY_KEY
+
+# Model Selection
+FRONT_MODEL=$FRONT_MODEL
+BACK_MODEL=$BACK_MODEL
+VISION_MODEL=$VISION_MODEL
+
+# Backend Selection
+STT_BACKEND=$STT_BACKEND
+TTS_BACKEND=$TTS_BACKEND
+
+# Installation Flags
+PULL_VISION=$PULL_VISION
+EOF
+
+    log_success "Configuration saved to $CONFIG_FILE"
 }
 
 # Run main function
