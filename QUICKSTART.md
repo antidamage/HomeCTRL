@@ -101,9 +101,9 @@ Choose backend for STT/TTS:
 
 ## Domain Setup
 
-Configure domains for HTTPS:
+Configure domain for HTTPS (Router API will use api.yourdomain.com automatically):
 ```bash
-./install.sh --domain-ui=ai.example.com --domain-api=api.example.com
+./install.sh --domain-ui=ai.example.com
 ```
 
 ## Troubleshooting

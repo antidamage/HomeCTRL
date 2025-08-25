@@ -87,15 +87,27 @@ get_server_ip() {
 # Get domain configuration
 get_domain_config() {
     log_info "Domain Configuration (optional - press Enter to skip)"
-    log_info "If you have domain names, we can set up HTTPS with Let's Encrypt"
+    log_info "If you have a domain name, we can set up HTTPS with Let's Encrypt"
+    log_info "The Router API will automatically use a subdomain (e.g., api.yourdomain.com)"
     
     read -p "Enter domain for WebUI (e.g., ai.example.com): " DOMAIN_UI
-    read -p "Enter domain for API (e.g., api.example.com): " DOMAIN_API
     
-    if [[ -n "$DOMAIN_UI" ]] || [[ -n "$DOMAIN_API" ]]; then
-        log_info "TLS will be configured for the provided domains"
+    # Automatically generate API domain from WebUI domain
+    if [[ -n "$DOMAIN_UI" ]]; then
+        # Extract the main domain and create API subdomain
+        if [[ "$DOMAIN_UI" =~ ^([^.]+)\.(.+)$ ]]; then
+            local prefix="${BASH_REMATCH[1]}"
+            local main_domain="${BASH_REMATCH[2]}"
+            DOMAIN_API="api.${main_domain}"
+        else
+            # Fallback if domain format is unexpected
+            DOMAIN_API="api.${DOMAIN_UI}"
+        fi
+        
+        log_info "Router API will be available at: $DOMAIN_API"
+        log_info "TLS will be configured for both domains"
     else
-        log_info "No domains provided - HTTP-only mode will be used"
+        log_info "No domain provided - HTTP-only mode will be used"
     fi
 }
 
@@ -262,7 +274,7 @@ show_config_summary() {
 Server Configuration:
   IP Address: $SERVER_IP
   WebUI Domain: ${DOMAIN_UI:-"Not configured"}
-  API Domain: ${DOMAIN_API:-"Not configured"}
+  Router API Domain: ${DOMAIN_API:-"Not configured"}
 
 Service Ports:
   Ollama: $OLLAMA_PORT

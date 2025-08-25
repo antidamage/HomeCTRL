@@ -76,7 +76,7 @@ OPTIONS:
     --stt-port=PORT            STT port (default: 5002)
     --tts-port=PORT            TTS port (default: 5003)
     --domain-ui=DOMAIN         Domain for WebUI (e.g., ai.example.com)
-    --domain-api=DOMAIN        Domain for API (e.g., api.example.com)
+    --domain-api=DOMAIN        Router API domain (auto-generated from WebUI domain)
     --tavily-key=KEY           Tavily API key for web search
     --noninteractive           Use existing config without prompts
     --reconfigure              Force reconfiguration
@@ -87,6 +87,7 @@ EXAMPLES:
     $0 --noninteractive                   # Use existing config
     $0 --reconfigure                      # Force reconfiguration
     $0 --pull-vision --stt-backend=docker # With vision models and Docker STT
+    $0 --domain-ui=ai.example.com        # WebUI domain (Router API auto-generated)
 
 EOF
 }
